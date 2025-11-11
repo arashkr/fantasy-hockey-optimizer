@@ -155,14 +155,163 @@ class RosterOptimizer:
 st.set_page_config(
     page_title="Fantasy Hockey Roster Optimizer",
     page_icon="🏒",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-st.title("🏒 Fantasy Hockey Roster Optimizer")
+# Custom CSS for better styling
 st.markdown("""
-Upload a Fantrax CSV export to calculate the optimal roster for each team.
-Each team's optimal roster includes: **3 Centers, 3 Right Wingers, 3 Left Wingers, 4 Defensemen, and 3 Goalies**.
-""")
+<style>
+    /* Main styling */
+    .main-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        border-radius: 10px;
+        color: white;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .main-header h1 {
+        color: white;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .main-header p {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.1rem;
+    }
+    
+    /* Card styling */
+    .team-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .metric-card {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .position-card {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        border-left: 3px solid #667eea;
+    }
+    
+    .player-item {
+        background: white;
+        padding: 0.75rem;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+    
+    .player-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transform: translateX(5px);
+    }
+    
+    /* Table styling */
+    .dataframe {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .dataframe thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .dataframe tbody tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+    
+    .dataframe tbody tr:hover {
+        background-color: #e9ecef;
+    }
+    
+    /* Button styling */
+    .stDownloadButton > button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .stDownloadButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* File uploader styling */
+    .uploadedFile {
+        border: 2px dashed #667eea;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    
+    /* Section headers */
+    h2 {
+        color: #667eea;
+        border-bottom: 3px solid #667eea;
+        padding-bottom: 0.5rem;
+        margin-top: 2rem;
+    }
+    
+    h3 {
+        color: #764ba2;
+        margin-top: 1.5rem;
+    }
+    
+    /* Info box styling */
+    .stInfo {
+        background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+        border-left: 4px solid #26a69a;
+        border-radius: 6px;
+    }
+    
+    /* Progress bar styling */
+    .stProgress > div > div > div {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Header
+st.markdown("""
+<div class="main-header">
+    <h1>🏒 Fantasy Hockey Roster Optimizer</h1>
+    <p>Calculate the optimal fantasy roster for each team based on fantasy points</p>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+    <h3 style="color: #667eea; margin-top: 0;">📋 Roster Requirements</h3>
+    <p style="margin-bottom: 0.5rem;">Each team's optimal roster includes:</p>
+    <ul style="margin: 0;">
+        <li><strong>3 Centers (C)</strong></li>
+        <li><strong>3 Right Wingers (RW)</strong></li>
+        <li><strong>3 Left Wingers (LW)</strong></li>
+        <li><strong>4 Defensemen (D)</strong></li>
+        <li><strong>3 Goalies (G)</strong></li>
+    </ul>
+</div>
+""", unsafe_allow_html=True)
 
 # File upload
 uploaded_file = st.file_uploader(
@@ -200,18 +349,30 @@ if uploaded_file is not None:
         # Sort results by total FPts
         sorted_results = sorted(results.items(), key=lambda x: x[1][1], reverse=True)
         
-        # Summary section
-        st.header("📊 Summary Results")
+        # Summary section with metrics
+        st.markdown("---")
+        st.markdown("## 📊 Summary Results")
         
-        # Create summary dataframe
+        # Top 3 teams as metrics
+        top_3_cols = st.columns(3)
+        for idx, (team_name, (roster, total_fpts)) in enumerate(sorted_results[:3]):
+            with top_3_cols[idx]:
+                st.metric(
+                    label=f"🥇 #{idx+1} - {team_name}" if idx == 0 else f"🥈 #{idx+1} - {team_name}" if idx == 1 else f"🥉 #{idx+1} - {team_name}",
+                    value=f"{total_fpts:.2f}",
+                    delta=None
+                )
+        
+        # Create summary dataframe with styling
         summary_data = []
-        for team_name, (roster, total_fpts) in sorted_results:
+        for rank, (team_name, (roster, total_fpts)) in enumerate(sorted_results, 1):
             pos_counts = defaultdict(int)
             for _, pos in roster:
                 pos_counts[pos] += 1
             summary_data.append({
+                'Rank': rank,
                 'Team': team_name,
-                'Total FPts': f"{total_fpts:.2f}",
+                'Total FPts': total_fpts,
                 'C': pos_counts['C'],
                 'RW': pos_counts['RW'],
                 'LW': pos_counts['LW'],
@@ -220,23 +381,58 @@ if uploaded_file is not None:
             })
         
         df_summary = pd.DataFrame(summary_data)
-        st.dataframe(df_summary, use_container_width=True, hide_index=True)
+        
+        # Style the dataframe
+        def highlight_top3(row):
+            if row['Rank'] <= 3:
+                return ['background-color: #fff3cd'] * len(row)
+            return [''] * len(row)
+        
+        styled_df = df_summary.style.apply(highlight_top3, axis=1).format({
+            'Total FPts': '{:.2f}'
+        })
+        
+        st.dataframe(
+            styled_df,
+            use_container_width=True,
+            hide_index=True,
+            height=400
+        )
         
         # Detailed breakdown
-        st.header("📋 Detailed Breakdown by Team")
+        st.markdown("---")
+        st.markdown("## 📋 Detailed Breakdown by Team")
         
-        # Team selector
+        # Team selector with rank
         team_names = [team for team, _ in sorted_results]
-        selected_team = st.selectbox(
+        team_with_ranks = [f"#{idx+1} - {team} ({results[team][1]:.2f} FPts)" 
+                          for idx, team in enumerate(team_names)]
+        
+        selected_index = st.selectbox(
             "Select a team to view detailed roster:",
-            team_names,
+            range(len(team_names)),
+            format_func=lambda x: team_with_ranks[x],
             index=0
         )
         
+        selected_team = team_names[selected_index]
+        
         # Display selected team's roster
         roster, total_fpts = results[selected_team]
+        rank = selected_index + 1
         
-        st.subheader(f"{selected_team} - Total FPts: {total_fpts:.2f}")
+        # Team header card
+        st.markdown(f"""
+        <div class="team-card">
+            <h2 style="color: #667eea; margin-top: 0;">
+                {'🥇' if rank == 1 else '🥈' if rank == 2 else '🥉' if rank == 3 else '🏒'} 
+                Rank #{rank}: {selected_team}
+            </h2>
+            <div style="font-size: 1.5rem; color: #764ba2; font-weight: bold;">
+                Total Fantasy Points: {total_fpts:.2f}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Group by position
         by_position = defaultdict(list)
@@ -253,27 +449,46 @@ if uploaded_file is not None:
             'D': 'Defensemen',
             'G': 'Goalies'
         }
+        position_icons = {
+            'C': '🎯',
+            'RW': '➡️',
+            'LW': '⬅️',
+            'D': '🛡️',
+            'G': '🥅'
+        }
         
         for idx, pos in enumerate(position_order):
             with cols[idx]:
                 players_in_pos = by_position[pos]
                 if players_in_pos:
-                    st.markdown(f"**{position_names[pos]} ({len(players_in_pos)})**")
+                    st.markdown(f"""
+                    <div class="position-card">
+                        <h3 style="color: #667eea; margin-top: 0;">
+                            {position_icons[pos]} {position_names[pos]} ({len(players_in_pos)})
+                        </h3>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
                     for p, assigned_pos in sorted(players_in_pos, key=lambda x: x[0].fpts, reverse=True):
                         eligible_pos = ','.join(sorted(p.positions))
                         st.markdown(f"""
-                        **{p.name}**  
-                        *{eligible_pos}* - {p.fpts:.2f} FPts
-                        """)
+                        <div class="player-item">
+                            <strong style="color: #333; font-size: 0.95rem;">{p.name}</strong><br>
+                            <span style="color: #666; font-size: 0.85rem;">{eligible_pos}</span> | 
+                            <span style="color: #667eea; font-weight: bold;">{p.fpts:.2f} FPts</span>
+                        </div>
+                        """, unsafe_allow_html=True)
         
         # Download results as CSV
-        st.header("💾 Export Results")
+        st.markdown("---")
+        st.markdown("## 💾 Export Results")
         
         # Create export data
         export_data = []
-        for team_name, (roster, total_fpts) in sorted_results:
+        for rank, (team_name, (roster, total_fpts)) in enumerate(sorted_results, 1):
             for player, assigned_pos in roster:
                 export_data.append({
+                    'Rank': rank,
                     'Team': team_name,
                     'Player': player.name,
                     'Assigned Position': assigned_pos,
@@ -285,29 +500,45 @@ if uploaded_file is not None:
         df_export = pd.DataFrame(export_data)
         csv_export = df_export.to_csv(index=False)
         
-        st.download_button(
-            label="📥 Download Results as CSV",
-            data=csv_export,
-            file_name="optimal_rosters.csv",
-            mime="text/csv"
-        )
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.download_button(
+                label="📥 Download Results as CSV",
+                data=csv_export,
+                file_name=f"optimal_rosters_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
         
     except Exception as e:
         st.error(f"Error processing file: {str(e)}")
         st.exception(e)
 else:
-    st.info("👆 Please upload a CSV file to get started.")
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%); 
+                padding: 2rem; border-radius: 10px; border-left: 4px solid #26a69a; 
+                margin: 2rem 0;">
+        <h3 style="color: #26a69a; margin-top: 0;">👆 Ready to Get Started?</h3>
+        <p style="font-size: 1.1rem; margin-bottom: 0;">
+            Upload your Fantrax CSV export file above to calculate optimal rosters for all teams.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Show example format
-    with st.expander("📝 Expected CSV Format"):
+    # Show example format in a nicer expander
+    with st.expander("📝 Expected CSV Format", expanded=False):
         st.markdown("""
-        The CSV file should have the following columns:
-        - `ID`: Player ID
-        - `Player`: Player name
-        - `Team`: NHL team abbreviation
-        - `Position`: Player position(s) - can be single (e.g., "C") or multiple (e.g., "C,RW")
-        - `Status`: Fantasy team abbreviation (2-3 letters)
-        - `Roster Status`: Active or Reserve
-        - `FPts`: Fantasy points
-        """)
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px;">
+            <p>The CSV file should have the following columns:</p>
+            <ul>
+                <li><strong>ID</strong>: Player ID</li>
+                <li><strong>Player</strong>: Player name</li>
+                <li><strong>Team</strong>: NHL team abbreviation</li>
+                <li><strong>Position</strong>: Player position(s) - can be single (e.g., "C") or multiple (e.g., "C,RW")</li>
+                <li><strong>Status</strong>: Fantasy team abbreviation (2-3 letters)</li>
+                <li><strong>Roster Status</strong>: Active or Reserve</li>
+                <li><strong>FPts</strong>: Fantasy points</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
 

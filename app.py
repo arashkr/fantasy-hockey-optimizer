@@ -48,17 +48,87 @@ class RosterOptimizer:
         Find the best possible roster for a team.
         Requirements: 3 C, 3 RW, 3 LW, 4 D, 3 G
         Returns: (list of (player, assigned_position), total FPts)
-        Uses an optimized greedy algorithm with intelligent position assignment.
+        Uses backtracking algorithm to find optimal solution.
         """
-        # Sort players by FPts (descending)
+        # Sort players by FPts (descending) for better pruning
         sorted_players = sorted(team_players, key=lambda p: p.fpts, reverse=True)
         
-        # Use optimized greedy algorithm (much faster than backtracking)
-        selected, total_fpts = self._optimized_greedy(
+        # Use backtracking algorithm to find optimal solution
+        selected, total_fpts = self._backtrack_optimize(
             sorted_players, {'C': 3, 'RW': 3, 'LW': 3, 'D': 4, 'G': 3}
         )
         
         return selected, total_fpts
+    
+    def _backtrack_optimize(
+        self, 
+        players: List[Player], 
+        positions_needed: Dict[str, int]
+    ) -> Tuple[List[Tuple[Player, str]], float]:
+        """
+        Backtracking algorithm to find the optimal roster assignment.
+        Considers all possible position assignments for multi-position players.
+        Uses pruning to avoid exploring suboptimal paths.
+        """
+        best_solution = []
+        best_score = -1.0
+        total_slots = sum(positions_needed.values())  # Total players needed (16)
+        
+        def backtrack(
+            player_idx: int,
+            current_assignment: List[Tuple[Player, str]],
+            remaining: Dict[str, int],
+            current_score: float
+        ):
+            nonlocal best_solution, best_score
+            
+            # Pruning: calculate upper bound of remaining score
+            # We can use at most (total_slots - len(current_assignment)) more players
+            slots_remaining = total_slots - len(current_assignment)
+            if slots_remaining > 0 and player_idx < len(players):
+                # Sum top remaining players we could potentially use
+                max_remaining_score = sum(
+                    p.fpts for p in players[player_idx:player_idx + slots_remaining]
+                )
+                if current_score + max_remaining_score <= best_score:
+                    return
+            
+            # Check if all positions are filled
+            if all(count == 0 for count in remaining.values()):
+                if current_score > best_score:
+                    best_score = current_score
+                    best_solution = current_assignment.copy()
+                return
+            
+            # If we've processed all players but positions aren't filled, this is invalid
+            if player_idx >= len(players):
+                return
+            
+            player = players[player_idx]
+            
+            # Try assigning this player to each eligible position
+            for pos in sorted(player.positions):  # Sort for consistency
+                if remaining.get(pos, 0) > 0:
+                    # Make assignment
+                    new_assignment = current_assignment + [(player, pos)]
+                    new_remaining = remaining.copy()
+                    new_remaining[pos] -= 1
+                    new_score = current_score + player.fpts
+                    
+                    # Recursively try next player
+                    backtrack(player_idx + 1, new_assignment, new_remaining, new_score)
+            
+            # Also try skipping this player (in case we need to save them for later)
+            backtrack(player_idx + 1, current_assignment, remaining, current_score)
+        
+        # Start backtracking
+        backtrack(0, [], positions_needed.copy(), 0.0)
+        
+        # If no solution found (shouldn't happen with valid data), fall back to greedy
+        if not best_solution:
+            return self._optimized_greedy(players, positions_needed)
+        
+        return best_solution, best_score
     
     def _optimized_greedy(
         self, 
@@ -66,17 +136,11 @@ class RosterOptimizer:
         positions_needed: Dict[str, int]
     ) -> Tuple[List[Tuple[Player, str]], float]:
         """
-        Optimized greedy algorithm that intelligently assigns multi-position players.
-        Much faster than backtracking while still producing near-optimal results.
+        Fallback greedy algorithm (kept for edge cases).
         """
         selected = []
         used = set()
         remaining = positions_needed.copy()
-        
-        # Strategy: For each player, assign to the position that:
-        # 1. They can play
-        # 2. Has the fewest remaining slots (to avoid blocking high-value players)
-        # 3. Maximizes total FPts
         
         for player in players:
             if player.id in used:
@@ -88,8 +152,6 @@ class RosterOptimizer:
             
             for pos in player.positions:
                 if remaining.get(pos, 0) > 0:
-                    # Priority: fewer remaining slots = higher priority
-                    # This ensures we fill harder positions first
                     priority = remaining[pos]
                     if priority < best_priority:
                         best_priority = priority
@@ -100,10 +162,8 @@ class RosterOptimizer:
                 used.add(player.id)
                 remaining[best_pos] -= 1
         
-        # If we didn't fill all positions, try a second pass with remaining players
-        # This handles edge cases where multi-position players need reassignment
+        # Fill remaining positions
         if sum(remaining.values()) > 0:
-            # Try to fill remaining positions with unused players
             for player in players:
                 if player.id in used:
                     continue

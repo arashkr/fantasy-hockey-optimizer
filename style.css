@@ -1,0 +1,149 @@
+/* Global Font & Colors */
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+html,
+body,
+[class*="css"] {
+    font-family: 'VT323', 'Courier New', monospace;
+    color: #00ff00;
+    background-color: #000000;
+}
+
+/* Main Header */
+.main-header {
+    border: 2px solid #00ff00;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    background-color: #000000;
+    box-shadow: 5px 5px 0px #004400;
+}
+
+.main-header h1 {
+    color: #00ff00;
+    font-family: 'VT323', monospace;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px #004400;
+}
+
+.main-header p {
+    color: #00cc00;
+    font-size: 1.2rem;
+}
+
+/* Card Styling (Retro Boxes) */
+.team-card,
+.position-card,
+.metric-card {
+    border: 1px solid #00ff00;
+    background-color: #000000;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 3px 3px 0px #004400;
+}
+
+.player-item {
+    border: 1px dashed #00aa00;
+    background-color: #001100;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.1s;
+}
+
+.player-item:hover {
+    background-color: #003300;
+    border-style: solid;
+    cursor: pointer;
+}
+
+/* Dataframes */
+.dataframe {
+    border: 1px solid #00ff00 !important;
+    font-family: 'VT323', monospace !important;
+}
+
+.dataframe thead th {
+    background-color: #002200 !important;
+    color: #00ff00 !important;
+    border-bottom: 1px solid #00ff00 !important;
+    text-transform: uppercase;
+}
+
+.dataframe tbody tr {
+    background-color: #000000 !important;
+    color: #00ff00 !important;
+}
+
+.dataframe tbody tr:hover {
+    background-color: #003300 !important;
+    color: #ffffff !important;
+}
+
+/* Buttons */
+.stButton>button,
+.stDownloadButton>button {
+    background-color: #000000;
+    color: #00ff00;
+    border: 2px solid #00ff00;
+    border-radius: 0;
+    font-family: 'VT323', monospace;
+    text-transform: uppercase;
+    box-shadow: 3px 3px 0px #004400;
+    transition: all 0.1s;
+}
+
+.stButton>button:hover,
+.stDownloadButton>button:hover {
+    background-color: #00ff00;
+    color: #000000;
+    box-shadow: 1px 1px 0px #004400;
+    transform: translate(2px, 2px);
+}
+
+/* Inputs */
+.stSelectbox>div>div {
+    background-color: #000000;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    border-radius: 0;
+    font-family: 'VT323', monospace;
+}
+
+/* Progress Bar */
+.stProgress>div>div>div {
+    background-color: #00ff00;
+}
+
+/* Headings */
+h1,
+h2,
+h3 {
+    color: #00ff00 !important;
+    font-family: 'VT323', monospace !important;
+}
+
+h2 {
+    border-bottom: 2px dashed #00ff00;
+    padding-bottom: 0.5rem;
+}
+
+/* Info Box */
+.stInfo {
+    background-color: #001100;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+}
+
+/* Expander */
+.streamlit-expanderHeader {
+    background-color: #000000;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    font-family: 'VT323', monospace;
+}
+
+/* Hide File Uploader Icon */
+[data-testid="stFileUploadDropzone"] svg {
+    display: none;
+}
